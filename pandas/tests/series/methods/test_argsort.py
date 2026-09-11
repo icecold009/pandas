@@ -3,6 +3,7 @@ import pytest
 
 import pandas as pd
 import pandas._testing as tm
+from pandas.errors import Pandas4Warning
 
 
 class TestSeriesArgsort:
@@ -66,6 +67,77 @@ class TestSeriesArgsort:
         )
         with pytest.raises(AssertionError, match=msg):
             tm.assert_numpy_array_equal(qindexer, mindexer)
+
+    def test_argsort_stable_keyword(self):
+        # GH#64255
+        ser = pd.Series(np.random.default_rng(2).integers(0, 100, size=10000))
+
+        true_indexer = ser.argsort(stable=True)
+        false_indexer = ser.argsort(stable=False)
+
+        true_expected = np.argsort(ser.values, kind="stable")
+        false_expected = np.argsort(ser.values, kind="quicksort")
+
+        tm.assert_numpy_array_equal(true_indexer.values, true_expected)
+        tm.assert_numpy_array_equal(false_indexer.values, false_expected)
+
+    def test_argsort_deprecated_pos_arg_stable(self):
+        # GH#64255
+        ser = pd.Series(np.random.default_rng(2).integers(0, 100, size=10000))
+        depr_msg = (
+            "Starting with pandas version 4.0 all arguments of argsort except for the "
+            "arguments 'axis', 'kind' and 'order' will be keyword-only."
+        )
+
+        with tm.assert_produces_warning(Pandas4Warning, match=depr_msg):
+            true_indexer = ser.argsort(0, None, None, True)
+        with tm.assert_produces_warning(Pandas4Warning, match=depr_msg):
+            false_indexer = ser.argsort(0, None, None, False)
+
+        true_expected = np.argsort(ser.values, kind="stable")
+        false_expected = np.argsort(ser.values, kind="quicksort")
+
+        tm.assert_numpy_array_equal(true_indexer.values, true_expected)
+        tm.assert_numpy_array_equal(false_indexer.values, false_expected)
+
+    @pytest.mark.parametrize("kind", ["quicksort", "mergesort", "heapsort", "stable"])
+    @pytest.mark.parametrize("stable", [False, True])
+    def test_argsort_kind_and_stable(self, kind, stable):
+        # GH#64255
+        ser = pd.Series([2, 1, 2, 1])
+        msg = "`kind` and `stable` can't be provided at the same time."
+
+        with tm.assert_produces_warning(Pandas4Warning, match=msg):
+            result = ser.argsort(kind=kind, stable=stable)
+        expected = ser.argsort(kind=kind)
+        tm.assert_series_equal(result, expected)
+
+    def test_argsort_numpy_stable(self):
+        # GH#64255
+        ser = pd.Series(np.random.default_rng(2).integers(0, 100, size=10000))
+
+        true_indexer = np.argsort(ser, stable=True)
+        false_indexer = np.argsort(ser, stable=False)
+
+        true_expected = np.argsort(ser.values, kind="stable")
+        false_expected = np.argsort(ser.values, kind="quicksort")
+
+        tm.assert_numpy_array_equal(true_indexer.values, true_expected)
+        tm.assert_numpy_array_equal(false_indexer.values, false_expected)
+
+    @pytest.mark.parametrize("kind", ["quicksort", "mergesort"])
+    @pytest.mark.parametrize("stable", [False, True])
+    def test_argsort_numpy_kind_and_stable(self, kind, stable):
+        # GH#64255
+        ser = pd.Series([2, 1, 2, 1])
+        msg = "`kind` and `stable` can't be provided at the same time."
+
+        with tm.assert_produces_warning(
+            Pandas4Warning, check_stacklevel=False, match=msg
+        ):
+            result = np.argsort(ser, kind=kind, stable=stable)
+        expected = ser.argsort(kind=kind)
+        tm.assert_series_equal(result, expected)
 
     def test_argsort_preserve_name(self, datetime_series):
         result = datetime_series.argsort()

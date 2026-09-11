@@ -65,6 +65,7 @@ enhancement2
 
 Other enhancements
 ^^^^^^^^^^^^^^^^^^
+- :meth:`Series.argsort` now honors ``stable=True`` to perform a stable sort, matching NumPy (:issue:`64255`)
 - :class:`Period` now supports f-string formatting via ``__format__``, e.g. ``f"{period:%Y-%m}"`` (:issue:`48536`)
 - :class:`Series` and :class:`DataFrame` with ``timedelta64`` dtype now aligns fractional seconds in string representation for easier reading (:issue:`57188`)
 - :meth:`.DataFrameGroupBy.agg` now allows for the provided ``func`` to return a NumPy array (:issue:`63957`)
@@ -381,6 +382,7 @@ Deprecations
 - Deprecated :func:`set_eng_float_format`. Use ``pd.set_option("display.precision", N)`` to control decimal precision, or pass a custom callable to ``pd.set_option("display.float_format", func)`` (:issue:`64460`)
 - Deprecated :meth:`.DataFrameGroupBy.agg` and :meth:`.Resampler.agg` unpacking a scalar when the provided ``func`` returns a Series or array of length 1; in the future this will result in the Series or array being in the result. Users should unpack the scalar in ``func`` itself (:issue:`64014`)
 - Deprecated :meth:`ExcelFile.parse`, use :func:`read_excel` instead (:issue:`58247`)
+- Deprecated positional use of the ``stable`` argument to :meth:`Series.argsort`; pass it as a keyword instead (:issue:`64255`)
 - Deprecated :meth:`Series.fillna`, :meth:`DataFrame.fillna`, and :meth:`Index.fillna` with an incompatible value that requires dtype casting. In a future version, this will raise instead. Explicitly cast to a common dtype before filling (:issue:`45153`)
 - Deprecated ``engine="fastparquet"`` and ``engine="auto"`` in :func:`read_parquet` and :meth:`DataFrame.to_parquet`. The ``fastparquet`` library has been retired; use ``engine="pyarrow"`` or do not pass ``engine`` to use the default. (:issue:`64597`)
 - Deprecated ``pandas.core.accessor.CachedAccessor``, use ``pandas.core.accessor.Accessor`` instead (:issue:`66215`).
